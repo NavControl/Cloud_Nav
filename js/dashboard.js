@@ -54,13 +54,18 @@ async function cargarEstudiantes() {
 }
 
 cargarEstudiantes();
-
+// ✅ Subir archivo
 async function subirArchivo() {
   const archivoInput = document.getElementById("archivo");
   const archivo = archivoInput.files[0];
 
   if (!archivo) {
-    alert("Selecciona un archivo primero.");
+    showToast("Selecciona un archivo primero.", "error");
+    return;
+  }
+
+  if (archivo.size > 5 * 1024 * 1024) {
+    showToast("El archivo no debe superar los 5 MB.", "error");
     return;
   }
 
@@ -70,25 +75,37 @@ async function subirArchivo() {
   } = await client.auth.getUser();
 
   if (userError || !user) {
-    alert("Sesión no válida.");
+    showToast("Sesión no válida.", "error");
     return;
   }
 
   const nombreRuta = `${user.id}/${archivo.name}`;
-  const { data, error } = await client.storage
+
+  const { data: existentes } = await client.storage
+    .from("tareas")
+    .list(user.id);
+
+  if (existentes?.some((f) => f.name === archivo.name)) {
+    const reemplazar = confirm("Ya existe un archivo con ese nombre. ¿Deseas reemplazarlo?");
+    if (!reemplazar) return;
+  }
+
+  const { error } = await client.storage
     .from("tareas")
     .upload(nombreRuta, archivo, {
       cacheControl: "3600",
-      upsert: false,
+      upsert: true,
     });
 
   if (error) {
-    alert("Error al subir: " + error.message);
+    showToast("Error al subir: " + error.message, "error");
   } else {
-    alert("Archivo subido correctamente.");
+    showToast("Archivo subido correctamente ✅", "success");
+    document.getElementById("archivo").value = ""; // 🧹 Limpiar input
     listarArchivos();
   }
 }
+
 
 async function listarArchivos() {
   const {
