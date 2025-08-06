@@ -1,6 +1,7 @@
 const SUPABASE_URL = "https://aecvjfocwbicvqpckloa.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFlY3ZqZm9jd2JpY3ZxcGNrbG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MDUxMjEsImV4cCI6MjA3MDA4MTEyMX0._HTT_bDMJds-MPDrkdy2afZoXNpVAMQYRJsZmRkDCM8";
-                                                                                                                                                                                                                                                           const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 async function agregarEstudiante() {
   const nombre = document.getElementById("nombre").value;
@@ -34,7 +35,7 @@ async function agregarEstudiante() {
 
 async function cargarEstudiantes() {
   const { data, error } = await client
-    .from("estudiantes")  //Nombre de BD
+    .from("estudiantes")
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -47,7 +48,7 @@ async function cargarEstudiantes() {
   lista.innerHTML = "";
   data.forEach((est) => {
     const item = document.createElement("li");
-    item.textContent = '${est.nombre} (${est.clase})';
+    item.textContent = `${est.nombre} (${est.clase})`;
     lista.appendChild(item);
   });
 }
@@ -73,9 +74,9 @@ async function subirArchivo() {
     return;
   }
 
-  const nombreRuta = '${user.id}/${archivo.name}'; 
+  const nombreRuta = `${user.id}/${archivo.name}`;
   const { data, error } = await client.storage
-    .from("tareas") //Nombre del bucket
+    .from("tareas")
     .upload(nombreRuta, archivo, {
       cacheControl: "3600",
       upsert: false,
@@ -85,7 +86,7 @@ async function subirArchivo() {
     alert("Error al subir: " + error.message);
   } else {
     alert("Archivo subido correctamente.");
-    listarArchivos(); 
+    listarArchivos();
   }
 }
 
@@ -102,7 +103,7 @@ async function listarArchivos() {
 
   const { data, error } = await client.storage
     .from("tareas")
-    .list('${user.id}', { limit: 20 });
+    .list(`${user.id}`, { limit: 20 });
 
   const lista = document.getElementById("lista-archivos");
   lista.innerHTML = "";
@@ -115,7 +116,7 @@ async function listarArchivos() {
   data.forEach(async (archivo) => {
     const { data: signedUrlData, error: signedUrlError } = await client.storage
       .from("tareas")
-      .createSignedUrl('${user.id}/${archivo.name}', 60); 
+      .createSignedUrl(`${user.id}/${archivo.name}`, 60);
 
     if (signedUrlError) {
       console.error("Error al generar URL firmada:", signedUrlError.message);
@@ -123,7 +124,6 @@ async function listarArchivos() {
     }
 
     const publicUrl = signedUrlData.signedUrl;
-
     const item = document.createElement("li");
 
     const esImagen = archivo.name.match(/\.(jpg|jpeg|png|gif)$/i);
@@ -142,12 +142,13 @@ async function listarArchivos() {
         <a href="${publicUrl}" target="_blank">Ver PDF</a>
       `;
     } else {
-      item.innerHTML = <a href="${publicUrl}" target="_blank">${archivo.name}</a>;
+      item.innerHTML = `<a href="${publicUrl}" target="_blank">${archivo.name}</a>`;
     }
 
     lista.appendChild(item);
   });
 }
+
 listarArchivos();
 
 async function cerrarSesion() {
