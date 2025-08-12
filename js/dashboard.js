@@ -47,11 +47,76 @@ async function cargarEstudiantes() {
   const lista = document.getElementById("lista-estudiantes");
   lista.innerHTML = "";
   data.forEach((est) => {
-    const item = document.createElement("li");
-    item.textContent = `${est.nombre} (${est.clase})`;
-    lista.appendChild(item);
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${est.nombre}</td>
+      <td>${est.correo}</td>
+      <td>${est.clase}</td>
+      <td>
+        <button onclick="editarEstudiante('${est.id}')">✏️ Editar</button>
+        <button onclick="eliminarEstudiante('${est.id}')">🗑️ Eliminar</button>
+      </td>
+    `;
+    lista.appendChild(row);
   });
 }
+
+// 📝 Editar estudiante
+async function editarEstudiante(id) {
+  const { data: estudiante, error } = await client
+    .from("estudiantes")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error) {
+    alert("Error al obtener datos: " + error.message);
+    return;
+  }
+
+  const nuevoNombre = prompt("Nuevo nombre:", estudiante.nombre);
+  const nuevoCorreo = prompt("Nuevo correo:", estudiante.correo);
+  const nuevaClase = prompt("Nueva clase:", estudiante.clase);
+
+  if (!nuevoNombre || !nuevoCorreo || !nuevaClase) {
+    alert("Todos los campos son obligatorios.");
+    return;
+  }
+
+  const { error: updateError } = await client
+    .from("estudiantes")
+    .update({
+      nombre: nuevoNombre,
+      correo: nuevoCorreo,
+      clase: nuevaClase,
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    alert("Error al actualizar: " + updateError.message);
+  } else {
+    alert("Estudiante actualizado ✅");
+    cargarEstudiantes();
+  }
+}
+
+// 🗑️ Eliminar estudiante
+async function eliminarEstudiante(id) {
+  if (!confirm("¿Seguro que quieres eliminar este estudiante?")) return;
+
+  const { error } = await client
+    .from("estudiantes")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    alert("Error al eliminar: " + error.message);
+  } else {
+    alert("Estudiante eliminado ✅");
+    cargarEstudiantes();
+  }
+}
+
 
 cargarEstudiantes();
 // ✅ Subir archivo
